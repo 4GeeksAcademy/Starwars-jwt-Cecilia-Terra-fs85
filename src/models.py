@@ -1,27 +1,73 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import mapped_column
 from sqlalchemy import Integer, String, Boolean
-
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship, Mapped
+from typing import List
 db = SQLAlchemy()
 
-
-class User(db.Model):
-    __tablename__ = "user"
-
+class Usuarios(db.Model):
+    __tablename__ = "usuarios"
     id = mapped_column(Integer, primary_key=True)
-    email = mapped_column(String(120), nullable=False)
-    password = mapped_column(String(80))
-    is_active = mapped_column(Boolean)
+    nombre = mapped_column(String(50), nullable=True)
+    correo = mapped_column(String(100), nullable=False)
+    contraseña = mapped_column(String(20), nullable=False)
+    suscripcion = mapped_column(String(10), nullable=True)
+    # favoritos: Mapped[List["Favoritos"]]= relationship()
 
-    def __repr__(self):
-        return '<User %r>' % self.username
+    def serialize(self):#Cada modelo tiene método serialize() para convertir el objeto en un diccionario serializable (para JSON), no incluir contraseñas
+        return {
+            "id": self.id,
+            "correo": self.correo
+            # do not serialize the password, its a security breach
+        }
+    
+class Planetas(db.Model):
+    __tablename__ = "planetas"
+    id = mapped_column(Integer, primary_key=True)
+    nombre_planeta = mapped_column(String(50), nullable=False)
+    poblacion = mapped_column(String(20), nullable=False)
+    extension = mapped_column(String(10), nullable=False)
+    favoritos: Mapped[List["Favoritos"]] = relationship()
 
     def serialize(self):
         return {
             "id": self.id,
-            "email": self.email,
+            "nombre_planeta": self.nombre_planeta
             # do not serialize the password, its a security breach
         }
+    
+class Personajes(db.Model):
+    __tablename__ = "personajes"
+    id = mapped_column(Integer, primary_key=True)
+    nombre_personaje = mapped_column(String(50), nullable=False)
+    color_de_ojos = mapped_column(String(100), nullable=False)
+    color_de_pelo = mapped_column(String(20), nullable=False)
+    altura_de = mapped_column(String(10), nullable=False)
+    favoritos: Mapped[List["Favoritos"]] = relationship()
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "nombre_personaje": self.nombre_personaje
+            # do not serialize the password, its a security breach
+        }
+    
+class Favoritos(db.Model):
+    __tablename__ = "favoritos"
+    id = mapped_column(Integer, primary_key=True)
+    usuarios_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"))
+    planetas_id: Mapped[int] = mapped_column(ForeignKey("planetas.id"))
+    personajes_id: Mapped[int] = mapped_column(ForeignKey("personajes.id"))
+
+    def serialize(self):
+        return {
+            "id": self.id
+            # do not serialize the password, its a security breach
+        }
+
+       
+  
 
 
 
