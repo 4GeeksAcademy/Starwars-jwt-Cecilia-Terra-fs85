@@ -5,7 +5,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, Usuarios, Planetas, Personajes, Favoritos
+from models import db, Usuarios, Planetas, Personajes, Favoritos_planetas, Favoritos_personajes
 from sqlalchemy import select
 #from models import Person
 
@@ -31,7 +31,7 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-#GET de todos los usuarios
+#GET de todos los usuarios ok
 @app.route('/usuarios', methods=['GET'])
 def handle_hello():
     data = db.session.scalars(select(Usuarios)).all()
@@ -43,7 +43,7 @@ def handle_hello():
     }
     return jsonify(response_body), 200
 
-#GET de todos los planetas
+#GET de todos los planetas ok
 @app.route('/planetas', methods=['GET'])
 def handle_planetas():
     data = db.session.scalars(select(Planetas)).all()
@@ -55,7 +55,7 @@ def handle_planetas():
     }
     return jsonify(response_body), 200
 
-#GET de todos los personajes
+#GET de todos los personajes ok
 @app.route('/personajes', methods=['GET'])
 def handle_personajes():
     data = db.session.scalars(select(Personajes)).all()
@@ -67,10 +67,10 @@ def handle_personajes():
     }
     return jsonify(response_body), 200
 
-#GET de los favoritos
-@app.route('/favoritos', methods=['GET'])
-def handle_favoritos():
-    data = db.session.scalars(select(Favoritos)).all()
+#GET de los favoritos personajes ok
+@app.route('/favoritos-personajes', methods=['GET'])
+def handle_favoritos_personajes():
+    data = db.session.scalars(select(Favoritos_personajes)).all()
     results = list(map(lambda item: item.serialize(),data))
     print(results)
     response_body = {
@@ -80,7 +80,20 @@ def handle_favoritos():
     return jsonify(response_body), 200
 
 
-#GET de un usuario unico
+#GET de los favoritos planetas
+@app.route('/favoritos-planetas', methods=['GET'])
+def handle_favoritos_planetas():
+    data = db.session.scalars(select(Favoritos_planetas)).all()
+    results = list(map(lambda item: item.serialize(),data))
+    print(results)
+    response_body = {
+        "msg": "Hello, this are the favoritos ",
+        "results": results
+    }
+    return jsonify(response_body), 200
+
+
+#GET de un usuario unico ok
 @app.route('/usuario/<int:id>', methods=['GET'])
 def traer_usuario(id):
     usuario = db.session.execute(select(Usuarios).filter_by(id=id)).scalar_one()
@@ -91,7 +104,7 @@ def traer_usuario(id):
     }
     return jsonify(response_body), 200
 
-#GET de un planeta unico
+#GET de un planeta unico ok
 @app.route('/planeta/<int:id>', methods=['GET'])
 def traer_planeta(id):
     planeta = db.session.execute(select(Planetas).filter_by(id=id)).scalar_one()
@@ -115,9 +128,9 @@ def traer_personaje(id):
 
 
 #GET de un favorito unico
-@app.route('/favorito/<int:id>', methods=['GET'])
-def traer_favorito(id):
-    favorito = db.session.execute(select(Favoritos).filter_by(id=id)).scalar_one()
+@app.route('/favorito-personaje/<int:id>', methods=['GET'])
+def traer_personaje_favorito(id):
+    favorito = db.session.execute(select(Favoritos_personajes).filter_by(id=id)).scalar_one()
 
     response_body = {
         "msg": "Hello, this is your favorito ",
@@ -136,7 +149,7 @@ def crear_usuario():
     db.session.commit()
 
     response_body = {
-        "msg": "Hello, this is your GET /user response ",
+        "msg": "Hello, this is your usuario ",
         "result":request_data
     }
     return jsonify(response_body), 200
@@ -168,6 +181,38 @@ def crear_personaje():
         "result":request_data
     }
     return jsonify(response_body), 200
+
+
+
+#POST favoritos, agregar planeta a favorito
+@app.route('/favoritos-planeta', methods=['POST'])
+def crear_planeta_favorito():
+    request_data = request.json
+    planeta_favorito= Favoritos_planetas(planeta_id=request_data["planeta_id"], usuario_id=request_data["usuario_id"])
+    db.session.add(planeta_favorito)
+    db.session.commit()
+
+    response_body = {
+        "msg": "Hello, this is your planeta favorito ",
+        "result":request_data
+    }
+    return jsonify(response_body), 200
+
+
+#POST favoritos, agregar personaje a favorito
+@app.route('/favoritos-personaje', methods=['POST'])
+def crear_personaje_favorito():
+    request_data = request.json
+    personaje_favorito= Favoritos_personajes(personaje_id=request_data["personaje_id"], usuario_id=request_data["usuario_id"])
+    db.session.add(personaje_favorito)
+    db.session.commit()
+
+    response_body = {
+        "msg": "Hello, this is your personaje favorito ",
+        "result":request_data
+    }
+    return jsonify(response_body), 200
+
 
 
 #Metodo DELETE de un usuario
@@ -221,11 +266,11 @@ def borrar_planeta(id):
         
         return jsonify(response_body), 200  
 
-#Metodo DELETE de un favorito
-@app.route('/usuario/<int:id>', methods=['DELETE'])
-def borrar_favorito(id):
+#Metodo DELETE de un planeta favorito
+@app.route('/favoritos-planeta/<int:id>', methods=['DELETE'])
+def borrar_planeta_favorito(id):
          
-        favorito = db.session.execute(select(Favoritos).filter_by(id=id)).scalar_one_or_none() #si no eso este metodo , no puedo gestionar el not found  
+        favorito = db.session.execute(select(Favoritos_planetas).filter_by(id=id)).scalar_one_or_none() #si no eso este metodo , no puedo gestionar el not found  
         if favorito is None:
             return jsonify({"msg": "Favorito not found"}), 400#error por parte de peticion
         db.session.delete(favorito)
@@ -238,6 +283,22 @@ def borrar_favorito(id):
         return jsonify(response_body), 200  
 
 
+
+#Metodo DELETE de un personaje favorito
+@app.route('/favoritos-personaje/<int:id>', methods=['DELETE'])
+def borrar_personaje_favorito(id):
+         
+        favorito = db.session.execute(select(Favoritos_personajes).filter_by(id=id)).scalar_one_or_none() #si no eso este metodo , no puedo gestionar el not found  
+        if favorito is None:
+            return jsonify({"msg": "Favorito not found"}), 400#error por parte de peticion
+        db.session.delete(favorito)
+        db.session.commit()
+   
+        response_body = {
+        "msg": "Favorito eliminado"       
+    }
+        
+        return jsonify(response_body), 200  
 
 
 # this only runs if `$ python src/app.py` is executed
