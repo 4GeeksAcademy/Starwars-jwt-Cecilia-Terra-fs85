@@ -7,9 +7,17 @@ from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, Usuarios, Planetas, Personajes, Favoritos_planetas, Favoritos_personajes
 from sqlalchemy import select
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
 #from models import Person
 
 app = Flask(__name__)
+
+app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
+jwt = JWTManager(app)
+
 app.url_map.strict_slashes = False
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
@@ -299,6 +307,24 @@ def borrar_personaje_favorito(id):
     }
         
         return jsonify(response_body), 200  
+
+@app.route("/login", methods=["POST"])
+def login():
+    nombre = request.json.get("nombre", None)
+    contraseña = request.json.get("contraseña", None)
+    if nombre == "usuario.nombre" or contraseña == "usuario.contraseña":
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    access_token = create_access_token(identity=nombre)
+    return jsonify(access_token=access_token)
+
+@app.route("/profile", methods=["GET"])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
+  
 
 
 # this only runs if `$ python src/app.py` is executed

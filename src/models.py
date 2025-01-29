@@ -84,6 +84,8 @@ class Favoritos_planetas(db.Model):
             "planeta_id": self.planeta_id       
            
         }
+    
+    
 
 
        
